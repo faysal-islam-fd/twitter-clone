@@ -2,7 +2,7 @@ import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js"
 import User from "../models/user.model.js"
 import bcrypt from "bcryptjs"
 export const signup = async(req,res)=>{
-    console.log(req.body)
+
     try{
         const {username,fullname,email,password} = req.body
         
@@ -66,8 +66,7 @@ export const login = async (req,res)=>{
         }
 
         const user = await User.findOne({username})
-        console.log(req.body);
-        
+      
         if(!user){
             return res.status(400).json({message:"User not found! Please signup"})
         }
