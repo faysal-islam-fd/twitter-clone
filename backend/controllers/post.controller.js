@@ -6,8 +6,7 @@ import User from "../models/user.model.js";
 export const createPost = async (req, res) => {
     try{
         let {text,image} = req.body;
-        console.log(req.body);
-        
+      
         const userId = req.user._id;
         if(!text && !image){
             return res.status(400).json({message: "Text or image is required"})
@@ -26,7 +25,6 @@ export const createPost = async (req, res) => {
         res.status(201).json({message: "Post created successfully"})
     }
     catch(error){
-        console.log(error);
         res.status(500).json({message: "Internal server error"})
     }
 
@@ -51,7 +49,6 @@ export const deletePost = async (req, res) => {
         res.status(200).json({message: "Post deleted successfully"})
     }
     catch(error){
-        console.log(error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -75,7 +72,6 @@ export const commentOnPost = async (req, res) => {
         res.status(201).json({message: "Comment added successfully"})
     }
     catch(error){
-        console.log(error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -91,14 +87,14 @@ export const likeUnlikePost = async (req, res) => {
             return res.status(404).json({message: "Post not found"})
         }
         if(post.likes.includes(userId)){
-            //unlike post
+          
             post.likes = post.likes.filter(id => id.toString() !== userId.toString())
             await User.updateOne({_id:userId}, {$pull: {likedPost: postId}})
             await post.save();
             res.status(200).json({message: "Unlike done successfully"})
         }
         else{
-            //liking post
+         
             post.likes.push(userId)
              await User.updateOne({_id: userId}, {$push: {likedPost: postId}})
             //TODO: send notification to the user..
@@ -118,7 +114,7 @@ export const likeUnlikePost = async (req, res) => {
        
     }
     catch(error){
-        console.log(error);
+      
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -135,7 +131,6 @@ export const getAllPosts =  async (req,res) =>{
         res.status(200).json(posts)
     }
     catch(error){
-        console.log(error);
         res.status(500).json({message: "Internal server error"});
     }
 }
@@ -159,8 +154,7 @@ export const getLikedPosts = async (req, res) => {
             res.status(200).json(likingPosts)
     }
         catch(error){
-            console.log(error);
-            res.status(500).json({message: "Internal server error"})
+           res.status(500).json({message: "Internal server error"})
         }
 }
 
@@ -177,7 +171,6 @@ export const getFollowingPosts = async (req, res) => {
         res.status(200).json(posts)
     }
     catch(error){
-        console.log(error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -196,7 +189,6 @@ export const getUserPosts = async(req, res) => {
         res.status(200).json(posts)
     }
     catch(error){
-        console.log(error);
         res.status(500).json({message: "Internal server error"})
     }
 }
