@@ -2,6 +2,8 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const CreatePost = () => {
 	const [text, setText] = useState("");
@@ -9,17 +11,37 @@ const CreatePost = () => {
 
 	const imgRef = useRef(null);
 
-	const isPending = false;
-	const isError = false;
-
-	const data = {
-		profileImg: "/avatars/boy1.png",
-	};
-
+	const { data:authUser } = useQuery({queryKey: ["authUser"]});
+	const queryClient = useQueryClient()
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		alert("Post created successfully");
+		createPost(
+			{	text,
+				image: img,
+			}
+		)
 	};
+	const {mutate:createPost, isPending, isError,error,data} = useMutation({
+		mutationFn: async(postData)=>{
+			const res = await fetch("/api/posts/create",{
+				method:"POST",
+				headers:{
+					"Content-Type":"application/json"
+				},
+				body: JSON.stringify(postData)
+			})
+			const resData = await res.json();
+			if(resData.failed){
+				throw new Error(resData.message)
+			}
+			return resData
+		},
+		onSuccess:()=>{
+			setImg(null)
+			setText("")
+			queryClient.invalidateQueries(["posts"])
+		}
+	})
 
 	const handleImgChange = (e) => {
         console.log("image event : ",e.target.files)
@@ -37,7 +59,7 @@ const CreatePost = () => {
 		<div className='flex p-4 items-start gap-4 border-b border-gray-700'>
 			<div className='avatar'>
 				<div className='w-8 rounded-full'>
-					<img src={data.profileImg || "/avatar-placeholder.png"} />
+					<img src={authUser.profileImage || "/avatar-placeholder.png"} />
 				</div>
 			</div>
 			<form className='flex flex-col gap-2 w-full' onSubmit={handleSubmit}>
@@ -72,10 +94,10 @@ const CreatePost = () => {
                     accept="image/*"
                     type='file' hidden ref={imgRef} onChange={handleImgChange} />
 					<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
-						{isPending ? "Posting..." : "Post"}
+						{isPending ? <LoadingSpinner size="sm"/> : "Post"}
 					</button>
 				</div>
-				{isError && <div className='text-red-500'>Something went wrong</div>}
+				{isError && <div className='text-red-500'>{error.message}</div>}
 			</form>
 		</div>
 	);

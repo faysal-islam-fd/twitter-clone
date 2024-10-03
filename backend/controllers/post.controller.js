@@ -9,7 +9,7 @@ export const createPost = async (req, res) => {
       
         const userId = req.user._id;
         if(!text && !image){
-            return res.status(400).json({message: "Text or image is required"})
+            return res.status(400).json({failed:true,message: "Text or image is required"})
         }
         if(image){
             const res = await cloudinary.uploader.upload(image)
@@ -25,7 +25,7 @@ export const createPost = async (req, res) => {
         res.status(201).json({message: "Post created successfully"})
     }
     catch(error){
-        res.status(500).json({message: "Internal server error"})
+        res.status(500).json({failed:true,message: "Internal server error"})
     }
 
 }
