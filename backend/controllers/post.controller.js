@@ -36,10 +36,10 @@ export const deletePost = async (req, res) => {
         const userId = req.user._id;
         const post = await Post.findById(postId);
         if(!post){
-            return res.status(404).json({message: "Post not found"})
+            return res.status(404).json({failed:true,message: "Post not found"})
         }
         if(post.user.toString() !== userId.toString()){
-            return res.status(401).json({message: "Unauthorized"})
+            return res.status(401).json({failed:true,message: "Unauthorized"})
         }
         if(post.image){
             const publicId = post.image.split('/').pop().split('.')[0];
@@ -49,7 +49,7 @@ export const deletePost = async (req, res) => {
         res.status(200).json({message: "Post deleted successfully"})
     }
     catch(error){
-        res.status(500).json({message: "Internal server error"})
+        res.status(500).json({failed:true,message: "Internal server error"})
     }
 }
 
