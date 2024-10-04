@@ -7,11 +7,11 @@ export const getUserProfile = async (req, res) => {
     const { username } = req.params;
     try{
         const user = await User.findOne({username});
-        if(!user) return res.status(404).json({message: "User not found"});
+        if(!user) return res.status(404).json({failed:true,message: "User not found"});
         res.status(200).json({user});
     }
     catch(error){
-        res.status(500).json({message: error.message});
+        res.status(500).json({failed:true,message: error.message});
         
     }
 }
@@ -23,8 +23,8 @@ export const followUser = async (req, res) => {
         const currentUser = await User.findById({_id:req.user._id});
        
       
-        if(userId === req.user._id.toString()) return res.status(400).json({message: "You can't follow yourself"});
-        if(!userId || !modifyUser) return res.status(404).json({message: "User not found"});
+        if(userId === req.user._id.toString()) return res.status(400).json({failed:true,message: "You can't follow yourself"});
+        if(!userId || !modifyUser) return res.status(404).json({failed:true,message: "User not found"});
 
         const isFollowing = modifyUser.followers.includes(currentUser._id);
         if(isFollowing){
@@ -50,7 +50,7 @@ export const followUser = async (req, res) => {
             }
     }
     catch(error){
-        res.status(500).json({message: "HIII"+error.message});
+        res.status(500).json({message: error.message});
     }
 }
 
@@ -71,10 +71,11 @@ export const getSuggestedUsers = async (req, res) => {
                     }
                 }
             ])
-            const filteredUsers = users.filter(user=> user !== userFollowedByMe.following.includes(user));
-            const suggestedUsers = filteredUsers.slice(0, 5);
-            suggestedUsers.forEach(user => (user.password = null));    
-            res.status(200).json({users: suggestedUsers});
+            const filteredUsers = users.filter(user=>  !userFollowedByMe.following.includes(user._id));
+           
+            filteredUsers.forEach(user => (user.password = null));  
+          
+            res.status(200).json({users: filteredUsers});
  
         }
         catch(error){

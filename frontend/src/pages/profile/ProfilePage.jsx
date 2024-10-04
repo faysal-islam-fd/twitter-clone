@@ -1,6 +1,6 @@
 
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
@@ -22,10 +22,23 @@ const ProfilePage = () => {
 
 	const coverImageRef = useRef(null);
 	const profileImageRef = useRef(null);   
-
-	const isMyProfile = true;
-
+	const { data: authUser } = useQuery({queryKey:["authUser"]})
 	
+	const { username }= useParams()
+	const isMyProfile =username === authUser.username
+	const {data,isLoading,isError,error } = useQuery({
+		queryKey: ["visitProfile"],
+		queryFn: async()=>{
+			const res = await fetch("/api/users/profile/"+ username)
+			const resData = await res.json()
+			if(resData.failed){
+				throw new Error(resData.message)
+			}
+			return resData;
+		}
+	})
+	const user = data?.user;
+
 
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
@@ -39,8 +52,7 @@ const ProfilePage = () => {
 		}
 	};
 
-	const {data:user,error, isLoading} = useQuery({queryKey:["authUser"]})
-
+	
 	return (
 		<>
 			<div className='flex-[4_4_0]  border-r border-gray-700 min-h-screen '>
@@ -154,11 +166,11 @@ const ProfilePage = () => {
 								</div>
 								<div className='flex gap-2'>
 									<div className='flex gap-1 items-center'>
-										<span className='font-bold text-xs'>{user?.following.length}</span>
+										<span className='font-bold text-xs'>{user?.following?.length}</span>
 										<span className='text-slate-500 text-xs'>Following</span>
 									</div>
 									<div className='flex gap-1 items-center'>
-										<span className='font-bold text-xs'>{user?.followers.length}</span>
+										<span className='font-bold text-xs'>{user?.followers?.length}</span>
 										<span className='text-slate-500 text-xs'>Followers</span>
 									</div>
 								</div>

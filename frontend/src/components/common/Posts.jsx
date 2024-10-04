@@ -29,7 +29,7 @@ const Posts = ({feedType}) => {
 	useEffect(()=>{
 		refetch()
 	},[feedType,refetch])
-	console.log(data)
+	
 	if(isError){
 		return <p>{error.message}</p>
 	}
