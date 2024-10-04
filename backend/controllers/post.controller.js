@@ -84,14 +84,14 @@ export const likeUnlikePost = async (req, res) => {
       
         
         if(!post){
-            return res.status(404).json({message: "Post not found"})
+            return res.status(404).json({failed:true,message: "Post not found"})
         }
         if(post.likes.includes(userId)){
           
-            post.likes = post.likes.filter(id => id.toString() !== userId.toString())
-            await User.updateOne({_id:userId}, {$pull: {likedPost: postId}})
+            const updatedLikes = post.likes.filter(id => id.toString() !== userId.toString())
+            post.likes = updatedLikes;
             await post.save();
-            res.status(200).json({message: "Unlike done successfully"})
+            res.status(200).json(updatedLikes)
         }
         else{
          
@@ -107,15 +107,15 @@ export const likeUnlikePost = async (req, res) => {
                 }
             )
             await notification.save()
-
-            res.status(200).json({message: "Like done successfully"})
+            const updatedLikes = post.likes
+            res.status(200).json(updatedLikes)
         }
        
        
     }
     catch(error){
       
-        res.status(500).json({message: "Internal server error"})
+        res.status(500).json({failed:true,message: "Internal server error"})
     }
 }
 
