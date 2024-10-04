@@ -1,15 +1,28 @@
 
 
 import { Link } from "react-router-dom";
-import { USERS_FOR_RIGHT_PANEL } from "../../utils/db/dummy";
 import RightPanelSkeleton from "../skeletons/RightPannelSkeleton";
+import { useQuery } from "@tanstack/react-query";
 const RightPanel = () => {
-	const isLoading = false;
+	const { isLoading,isError,error,data } = useQuery({
+		queryKey: ["suggestedUsers"],
+		queryFn: async()=>{
+			const res = await fetch("/api/users/suggested")
+			const data = await res.json();
+			if(data.failed){
+				throw new Error(data.message)
+			}
+			return data
+		},
+	})
 
+	if(isError){
+		return <p>{error.message}</p>
+	}
 	return (
 		<div className='hidden lg:block my-4 mx-2'>
 			<div className='bg-[#16181C] p-4 rounded-md sticky top-2'>
-				<p className='font-bold'>Who to follow</p>
+				<p className='font-bold mb-6'>Who to follow</p>
 				<div className='flex flex-col gap-4'>
 					{/* item */}
 					{isLoading && (
@@ -21,7 +34,7 @@ const RightPanel = () => {
 						</>
 					)}
 					{!isLoading &&
-						USERS_FOR_RIGHT_PANEL?.map((user) => (
+						data.users?.map((user) => (
 							<Link
 								to={`/profile/${user.username}`}
 								className='flex items-center justify-between gap-4'
@@ -30,12 +43,12 @@ const RightPanel = () => {
 								<div className='flex gap-2 items-center'>
 									<div className='avatar'>
 										<div className='w-8 rounded-full'>
-											<img src={user.profileImg || "/avatar-placeholder.png"} />
+											<img src={user.profileImage || "/avatar-placeholder.png"} />
 										</div>
 									</div>
 									<div className='flex flex-col'>
 										<span className='font-semibold tracking-tight truncate w-28'>
-											{user.fullName}
+											{user.fullname}
 										</span>
 										<span className='text-sm text-slate-500'>@{user.username}</span>
 									</div>

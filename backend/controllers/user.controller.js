@@ -59,7 +59,6 @@ export const getSuggestedUsers = async (req, res) => {
         try{
             const userId = req.user._id;
             const userFollowedByMe = await User.findById(userId).select("following");
-
             const users = await User.aggregate([
                 {
                     $match:{
@@ -72,14 +71,14 @@ export const getSuggestedUsers = async (req, res) => {
                     }
                 }
             ])
-            // const filteredUsers = users.filter(user=> user !== userFollowedByMe.includes(user));
-            // const suggestedUsers = filteredUsers.slice(0, 5);
-            // suggestedUsers.forEach(user => (user.password = null));    
-            // res.status(200).json({users: suggestedUsers});
-    res.status(200).json({message:"check"});
+            const filteredUsers = users.filter(user=> user !== userFollowedByMe.following.includes(user));
+            const suggestedUsers = filteredUsers.slice(0, 5);
+            suggestedUsers.forEach(user => (user.password = null));    
+            res.status(200).json({users: suggestedUsers});
+ 
         }
         catch(error){
-            res.status(500).json({message: error.message});
+            res.status(500).json({failed:true,message: error.message});
         }
 }
 
