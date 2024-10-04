@@ -60,19 +60,19 @@ export const commentOnPost = async (req, res) => {
         const postId = req.params.postId;
         const userId = req.user._id;
         if(!text){
-            return res.status(400).json({message: "Text is required"})
+            return res.status(400).json({failed:true,message: "Text is required"})
         }
         const post = await Post.findById(postId);
         if(!post){
-            return res.status(404).json({message: "Post not found"})
+            return res.status(404).json({failed:true,message: "Post not found"})
         }
         const comment = {text, user: userId} 
         post.comments.push(comment);
         await post.save();
-        res.status(201).json({message: "Comment added successfully"})
+        res.status(201).json(post.comments)
     }
     catch(error){
-        res.status(500).json({message: "Internal server error"})
+        res.status(500).json({failed:true,message: "Internal server error"})
     }
 }
 

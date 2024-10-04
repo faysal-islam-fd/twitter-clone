@@ -12,11 +12,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import LoadingSpinner from "./LoadingSpinner";
 
+
 const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostId} }) => {
 	const [comment, setComment] = useState("");
 	const {data:authUser} = useQuery({queryKey:["authUser"]})
 	const queryClient = useQueryClient();
-	const {mutate:deletePost,isPending,isError,error,data,isSuccess} = useMutation({
+	const {mutate:deletePost,isPending,isSuccess} = useMutation({
 		mutationFn: async(postId)=>{
 			const res = await fetch(`/api/posts/delete/${postId}`,{method:"DELETE"})
 			const resData = await res.json();
@@ -55,7 +56,34 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 			})
 		}
 	})
-	
+	const {mutate:commentPost,isPending:isCommenting} = useMutation({
+		mutationFn : async({commentData,commentId})=>{
+			const res = await fetch("/api/posts/comment/"+commentId,{
+				method:"POST",
+				headers:{
+					"Content-Type":"application/json"
+				},
+				body: JSON.stringify(commentData)
+			})
+			const data = await res.json()
+			if(data.failed){
+				throw new Error(data.message)
+			}
+			return data;
+		},
+		onSuccess : (updatedComments)=>{
+			queryClient.setQueryData(["posts"], (oldData)=>{
+				return oldData.map(p =>{
+					if(p._id === _id){
+						return {...p, comments: updatedComments}
+					}
+					return p;
+				});
+			})
+		}
+	})
+
+
 	const isLiked =  likes.includes(authUser._id);
 	if(isSuccess){
 		queryClient.invalidateQueries(["posts"])
@@ -72,7 +100,6 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 	const diffInDays = Math.floor(diffInHours / 24);
 	const formattedDate = diffInDays > 0 ? `${diffInDays}d` : diffInHours > 0 ? `${diffInHours}h` : `${diffInMinutes}m`;
 
-	const isCommenting = false;
 
 	const handleDeletePost = (postId) => {
 		deletePost(postId)
@@ -80,6 +107,8 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if(isCommenting) return;
+		commentPost({commentData:{text:comment},commentId:_id})
 	};
 
 	const handleLikePost = (e,id) => {
@@ -87,6 +116,7 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 		likeUnlike(id)
 
 	};
+	console.log(comments)
 
 	return (
 		<>
@@ -149,13 +179,13 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 												<div className='avatar'>
 													<div className='w-8 rounded-full'>
 														<img
-															src={comment.user.profileImg || "/avatar-placeholder.png"}
+															src={comment.user.profileImage || "/avatar-placeholder.png"}
 														/>
 													</div>
 												</div>
 												<div className='flex flex-col'>
 													<div className='flex items-center gap-1'>
-														<span className='font-bold'>{comment.user.fullName}</span>
+														<span className='font-bold'>{comment.user.fullname}</span>
 														<span className='text-gray-700 text-sm'>
 															@{comment.user.username}
 														</span>
