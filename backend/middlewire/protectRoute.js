@@ -9,20 +9,20 @@ export const protectRoute = async (req, res, next) => {
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
         if(!decoded){
-            return res.status(401).json({message:"Unauthorized"})
+            return res.status(401).json({failed:true,message:"Unauthorized"})
         }
 
         const user = await User.findById(decoded.id).select("-password")
        
         
         if(!user){
-            return res.status(401).json({message:"User Not Found!"})
+            return res.status(401).json({failed:true,message:"User Not Found!"})
         }   
         req.user = user
         next()
     }
     catch(error){
         console.log("Error in protectRoute middlewire: ",error)
-        res.status(500).json({message:"Internal Server Error"})
+        res.status(500).json({failed:true,message:"Internal Server Error"})
     }
 }

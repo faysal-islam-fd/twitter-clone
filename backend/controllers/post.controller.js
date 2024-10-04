@@ -62,14 +62,21 @@ export const commentOnPost = async (req, res) => {
         if(!text){
             return res.status(400).json({failed:true,message: "Text is required"})
         }
-        const post = await Post.findById(postId);
+        const post = await Post.findById(postId)
         if(!post){
             return res.status(404).json({failed:true,message: "Post not found"})
         }
         const comment = {text, user: userId} 
         post.comments.push(comment);
         await post.save();
-        res.status(201).json(post.comments)
+
+        const postComment = await Post.findById(postId).populate({ path: 'comments.user', select: '-password' })
+
+        if(!postComment){
+            return res.status(404).json({failed:true,message: "Post not found"})
+        }
+
+        res.status(201).json(postComment.comments)
     }
     catch(error){
         res.status(500).json({failed:true,message: "Internal server error"})

@@ -17,7 +17,7 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 	const [comment, setComment] = useState("");
 	const {data:authUser} = useQuery({queryKey:["authUser"]})
 	const queryClient = useQueryClient();
-	const {mutate:deletePost,isPending,isSuccess} = useMutation({
+	const {mutate:deletePost,isPending:isDeleting,isSuccess} = useMutation({
 		mutationFn: async(postId)=>{
 			const res = await fetch(`/api/posts/delete/${postId}`,{method:"DELETE"})
 			const resData = await res.json();
@@ -25,7 +25,12 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 				throw new Error(resData.message)
 			}
 			return resData
-		}
+		},
+			onSuccess:()=>{
+				queryClient.setQueryData(["posts"], (oldData)=>{
+					return oldData.filter(p => p._id  !== _id)
+				})
+			}
 	})
 	const {mutate:likeUnlike,isPending:isLiking	} = useMutation({
 		mutationFn: async(id)=>{
@@ -58,6 +63,7 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 	})
 	const {mutate:commentPost,isPending:isCommenting} = useMutation({
 		mutationFn : async({commentData,commentId})=>{
+			
 			const res = await fetch("/api/posts/comment/"+commentId,{
 				method:"POST",
 				headers:{
@@ -71,18 +77,19 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 			}
 			return data;
 		},
-		onSuccess : (updatedComments)=>{
+		onSuccess : (updatedData)=>{
+			
+		
 			queryClient.setQueryData(["posts"], (oldData)=>{
 				return oldData.map(p =>{
 					if(p._id === _id){
-						return {...p, comments: updatedComments}
+						return {...p, comments: updatedData}
 					}
 					return p;
 				});
 			})
 		}
 	})
-
 
 	const isLiked =  likes.includes(authUser._id);
 	if(isSuccess){
@@ -102,13 +109,17 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 
 
 	const handleDeletePost = (postId) => {
+		
 		deletePost(postId)
 	};
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		setComment("")
 		if(isCommenting) return;
+		
 		commentPost({commentData:{text:comment},commentId:_id})
+
 	};
 
 	const handleLikePost = (e,id) => {
@@ -116,7 +127,7 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 		likeUnlike(id)
 
 	};
-	console.log(comments)
+
 
 	return (
 		<>
@@ -138,8 +149,8 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 						</span>
 						{isMyPost && (
 							<span className='flex justify-end flex-1'>
-								{!isPending && (<FaTrash className='cursor-pointer hover:text-red-500' onClick={()=>handleDeletePost(_id)} />)}
-									{isPending && <Loa:iddingSpinner size="sm" />}
+								{!isDeleting && (<FaTrash className='cursor-pointer hover:text-red-500' onClick={()=>handleDeletePost(_id)} />)}
+									{isDeleting && <Loa:iddingSpinner size="sm" />}
 							</span>
 						)}
 					</div>
@@ -169,17 +180,19 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 								<div className='modal-box rounded border border-gray-600'>
 									<h3 className='font-bold text-lg mb-4'>COMMENTS</h3>
 									<div className='flex flex-col gap-3 max-h-60 overflow-auto'>
-										{comments.length === 0 && (
+										{comments?.comments?.length === 0 && (
 											<p className='text-sm text-slate-500'>
 												No comments yet 🤔 Be the first one 😉
 											</p>
 										)}
-										{comments.map((comment) => (
-											<div key={comment._id} className='flex gap-2 items-start'>
+										{comments.map((comment) =>{
+											
+											return(
+												<div key={comment._id} className='flex gap-2 items-start'>
 												<div className='avatar'>
 													<div className='w-8 rounded-full'>
 														<img
-															src={comment.user.profileImage || "/avatar-placeholder.png"}
+															src={comment?.user.profileImage || "/avatar-placeholder.png"}
 														/>
 													</div>
 												</div>
@@ -187,13 +200,14 @@ const Post = ({ post:{createdAt,user,_id,likes,text,image,comments,_id:likePostI
 													<div className='flex items-center gap-1'>
 														<span className='font-bold'>{comment.user.fullname}</span>
 														<span className='text-gray-700 text-sm'>
-															@{comment.user.username}
+															@{comment?.user.username}
 														</span>
 													</div>
 													<div className='text-sm'>{comment.text}</div>
 												</div>
 											</div>
-										))}
+											)
+										})}
 									</div>
 									<form
 										className='flex gap-2 items-center mt-4 border-t border-gray-600 pt-2'

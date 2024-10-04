@@ -12,12 +12,12 @@ export const getNofications = async (req, res) => {
         });
         await Notification.updateMany({to: userId}, {read: true});
         
-        res.status(200).json({notifications});
+        res.status(200).json(notifications);
     }
 
     catch(error){
         console.log(error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({failed:true,message: "Internal server error"});
     }
 
 }
@@ -25,33 +25,13 @@ export const getNofications = async (req, res) => {
 
 export const deleteAllNofications = async (req, res) => {
     const userId = req.user._id;
+    console.log("Deleting...")
     try{
 
         const notification = await Notification.deleteMany({to: userId});
         res.status(200).json({message: "Notifications deleted"});
     }
     catch(error){
-        console.log(error);
-        res.status(500).json({message: "Internal server error"});
-    }
-}
-
-export const deleteNofication = async (req, res) => {   
-    const {notificationId} = req.params;
-    if(!notificationId) return res.status(400).json({message: "Notification id is required"});
-    try{
-        
-        const deletedNotification = await Post.findById(notificationId);
-        if(!deletedNotification) return res.status(404).json({message: "Notification not found"});
-        if(deleteAllNofications.to.toString() !== req.user._id.toString()){
-            return res.status(401).json({message: "You are not authorized to delete this notification"})
-        }
-        await Notification.findByIdAndDelete(notificationId);
-        res.status(200).json({message: "Notification deleted"});
-        
-    } 
-    catch(error){
-        console.log(error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({failed:true,message: "Internal server error"});
     }
 }
