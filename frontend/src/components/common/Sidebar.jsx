@@ -12,7 +12,7 @@ const Sidebar = () => {
 	const queryClient = useQueryClient()
 	const { data} = useQuery({queryKey:["authUser"]})
 	
-	const { isError,isPending, error, mutate,isSuccess} = useMutation({
+	const {  mutate } = useMutation({
 			mutationFn: async ()=>{
 				
 					const res = await fetch("/api/auth/logout",{

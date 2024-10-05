@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
 import useFollow from "../../components/hooks/useFollow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import useUpdateProfile from "../../components/hooks/useUpdateProfile";
 
 const ProfilePage = () => {
     const queryClient = useQueryClient()
@@ -33,29 +34,8 @@ const ProfilePage = () => {
 	}
 
 
-	const { mutate:updateProfileImage,isPending:isUpdating } = useMutation({
-		mutationFn:async()=>{
-			const res = await fetch("/api/users/update",{
-				method:"POST",
-				body:JSON.stringify({coverImage,profileImage}),
-				headers:{
-					"Content-Type":"application/json"
-				}	
-			})
-			const resData = await res.json()
-			if(resData.failed){
-				throw new Error(resData.message)
-			}
-			return resData;
-
-		},
-		onSuccess: ()=>{
-			Promise.all([
-				queryClient.invalidateQueries({queryKey:["authUser"]}),
-				queryClient.invalidateQueries({queryKey:["visitProfile"]})
-			])
-		}
-	})
+	
+	const {updateProfile,isUpdating} = useUpdateProfile({profileImage,coverImage})
 
 	const { username }= useParams()
 	const isMyProfile =username === authUser.username
@@ -151,10 +131,11 @@ const ProfilePage = () => {
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
 								{isMyProfile && <EditProfileModal />}
-								{!isMyProfile && 
-								isFollowing ? 
+								{isFollowing && 
 								<LoadingSpinner size="sm"  />
-								:
+										}
+								{!isMyProfile
+								&&
 								<button
 									className='btn btn-outline rounded-full btn-sm'
 									onClick={() => follow(user._id)}
@@ -166,7 +147,11 @@ const ProfilePage = () => {
 									<button
 										
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={()=>updateProfileImage()}
+										onClick={async()=>{
+											await updateProfile()
+											setcoverImage(null)
+											setprofileImage(null)
+										}}
 									>
 										{isUpdating ? <LoadingSpinner size="sm" /> : "Save"}
 									</button>

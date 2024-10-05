@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { useState } from "react";
+import useUpdateProfile from "../../components/hooks/useUpdateProfile";
 
 const EditProfileModal = () => {
-	const queryClient = useQueryClient()
 	const [formData, setFormData] = useState({
 		fullname: "",
 		username: "",
@@ -12,34 +12,9 @@ const EditProfileModal = () => {
 		newPassword: "",
 		currentPassword: "",
 	});
+	const {updateProfile,isUpdating,error:updateError} = useUpdateProfile(formData)
 
-	const { mutate:updateProfile,isPending:isUpdating } = useMutation({
-		
-		mutationFn:async()=>{
-
-			const res = await fetch("/api/users/update",{
-				method:"POST",
-				headers:{
-					"Content-Type":"application/json"
-				},	
-				body:JSON.stringify(formData),
-			})
-			
-			const resData = await res.json()
-			if(resData.failed){
-				throw new Error(resData.message)
-			}
-			console.log(resData)
-			return resData;
-
-		},
-		onSuccess: ()=>{
-			Promise.all([
-				queryClient.invalidateQueries({queryKey:["authUser"]}),
-				queryClient.invalidateQueries({queryKey:["visitProfile"]})
-			])
-		}
-	})
+	
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
@@ -54,14 +29,16 @@ const EditProfileModal = () => {
 			</button>
 			<dialog id='edit_profile_modal' className='modal'>
 				<div className='modal-box border rounded-md border-gray-700 shadow-md'>
+				<form method="dialog">
+      <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+    </form>
 					<h3 className='font-bold text-lg my-3'>Update Profile</h3>
-					<form
+					<form 
 						className='flex flex-col gap-4'
 						onSubmit={(e) => {
-							console.log("updating..");
+							updateProfile()
 							
 							e.preventDefault();
-							updateProfile()
 						}}
 					>
 						<div className='flex flex-wrap gap-2'>
@@ -125,7 +102,13 @@ const EditProfileModal = () => {
 							name='link'
 							onChange={handleInputChange}
 						/>
-						<button type="submit" className='btn btn-primary rounded-full btn-sm text-white'>{isUpdating ? "Loading..": "Update"}</button>
+						{
+							updateError && 
+							<p className="text-red-500">{updateError.message}</p>
+							
+						}
+						<button  className='btn btn-primary rounded-full btn-sm text-white'>{isUpdating ?"Loading..." : "Update"}</button>
+					
 					</form>
 				</div>
 				<form method='dialog' className='modal-backdrop'>
