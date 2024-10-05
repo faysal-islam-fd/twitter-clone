@@ -1,4 +1,4 @@
-#Twitter Clone
+# Twitter Clone
 
 A simple full stack Twitter clone built with React.js, Node.js, MongoDB and More. This project replicates basic Twitter functionalities, allowing users to create accounts, post, like,comment and follow other users.
 
