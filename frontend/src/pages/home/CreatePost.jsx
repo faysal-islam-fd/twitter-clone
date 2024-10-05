@@ -23,6 +23,7 @@ const CreatePost = () => {
 	};
 	const {mutate:createPost, isPending, isError,error} = useMutation({
 		mutationFn: async(postData)=>{
+			console.log("post data ", postData)
 			const res = await fetch("/api/posts/create",{
 				method:"POST",
 				headers:{
@@ -44,7 +45,6 @@ const CreatePost = () => {
 	})
 
 	const handleImgChange = (e) => {
-        console.log("image event : ",e.target.files)
 		const file = e.target.files[0];
 		if (file) {
 			const reader = new FileReader();

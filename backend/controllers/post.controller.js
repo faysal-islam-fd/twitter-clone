@@ -25,7 +25,7 @@ export const createPost = async (req, res) => {
         res.status(201).json({message: "Post created successfully"})
     }
     catch(error){
-        res.status(500).json({failed:true,message: "Internal server error"})
+        res.status(500).json({failed:true,message: error.message})
     }
 
 }
@@ -186,16 +186,17 @@ export const getUserPosts = async(req, res) => {
     try{
         const { username } = req.params;
         const user = await User.findOne({username})
+        
         if(!user){
-            return res.status(404).json({message: "User not found"})
+            return res.status(404).json({failed:true,message: "User not found"})
         }
         const posts = await Post.find({user: user._id})
             .sort({createdAt: -1})
             .populate({path:"user",select:"-password"})
             .populate({path:"comments.user", select:"-password"})
         res.status(200).json(posts)
-    }
+    }    
     catch(error){
-        res.status(500).json({message: "Internal server error"})
+        res.status(500).json({failed:true,message: "Internal server error"})
     }
 }
