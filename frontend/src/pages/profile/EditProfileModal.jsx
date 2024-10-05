@@ -1,8 +1,10 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 const EditProfileModal = () => {
+	const queryClient = useQueryClient()
 	const [formData, setFormData] = useState({
-		fullName: "",
+		fullname: "",
 		username: "",
 		email: "",
 		bio: "",
@@ -11,6 +13,33 @@ const EditProfileModal = () => {
 		currentPassword: "",
 	});
 
+	const { mutate:updateProfile,isPending:isUpdating } = useMutation({
+		
+		mutationFn:async()=>{
+
+			const res = await fetch("/api/users/update",{
+				method:"POST",
+				headers:{
+					"Content-Type":"application/json"
+				},	
+				body:JSON.stringify(formData),
+			})
+			
+			const resData = await res.json()
+			if(resData.failed){
+				throw new Error(resData.message)
+			}
+			console.log(resData)
+			return resData;
+
+		},
+		onSuccess: ()=>{
+			Promise.all([
+				queryClient.invalidateQueries({queryKey:["authUser"]}),
+				queryClient.invalidateQueries({queryKey:["visitProfile"]})
+			])
+		}
+	})
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
@@ -29,8 +58,10 @@ const EditProfileModal = () => {
 					<form
 						className='flex flex-col gap-4'
 						onSubmit={(e) => {
+							console.log("updating..");
+							
 							e.preventDefault();
-							alert("Profile updated successfully");
+							updateProfile()
 						}}
 					>
 						<div className='flex flex-wrap gap-2'>
@@ -38,8 +69,8 @@ const EditProfileModal = () => {
 								type='text'
 								placeholder='Full Name'
 								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.fullName}
-								name='fullName'
+								value={formData.fullname}
+								name='fullname'
 								onChange={handleInputChange}
 							/>
 							<input
@@ -94,7 +125,7 @@ const EditProfileModal = () => {
 							name='link'
 							onChange={handleInputChange}
 						/>
-						<button className='btn btn-primary rounded-full btn-sm text-white'>Update</button>
+						<button type="submit" className='btn btn-primary rounded-full btn-sm text-white'>{isUpdating ? "Loading..": "Update"}</button>
 					</form>
 				</div>
 				<form method='dialog' className='modal-backdrop'>

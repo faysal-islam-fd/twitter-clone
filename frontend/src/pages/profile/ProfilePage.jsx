@@ -12,19 +12,51 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
+import useFollow from "../../components/hooks/useFollow";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const ProfilePage = () => {
-    
+    const queryClient = useQueryClient()
 	const [coverImage, setcoverImage] = useState(null);
 	const [profileImage, setprofileImage] = useState(null);
 	const [feedType, setFeedType] = useState("posts");
 
 	const coverImageRef = useRef(null);
 	const profileImageRef = useRef(null);   
-	const { data: authUser } = useQuery({queryKey:["authUser"]})
 	
+	const { follow, isPending:isFollowing,isSuccess } =useFollow()
+	const { data: authUser } = useQuery({queryKey:["authUser"]})
+	if(isSuccess){
+		queryClient.invalidateQueries({queryKey:["visitProfile"]})	
+	}
+
+
+	const { mutate:updateProfileImage,isPending:isUpdating } = useMutation({
+		mutationFn:async()=>{
+			const res = await fetch("/api/users/update",{
+				method:"POST",
+				body:JSON.stringify({coverImage,profileImage}),
+				headers:{
+					"Content-Type":"application/json"
+				}	
+			})
+			const resData = await res.json()
+			if(resData.failed){
+				throw new Error(resData.message)
+			}
+			return resData;
+
+		},
+		onSuccess: ()=>{
+			Promise.all([
+				queryClient.invalidateQueries({queryKey:["authUser"]}),
+				queryClient.invalidateQueries({queryKey:["visitProfile"]})
+			])
+		}
+	})
+
 	const { username }= useParams()
 	const isMyProfile =username === authUser.username
 	const {data,isLoading,isError,error } = useQuery({
@@ -40,7 +72,7 @@ const ProfilePage = () => {
 	})
 	const user = data?.user;
 
-
+	const amIFollowing = authUser?.following.includes(user?._id);
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -119,20 +151,24 @@ const ProfilePage = () => {
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
 								{isMyProfile && <EditProfileModal />}
-								{!isMyProfile && (
-									<button
-										className='btn btn-outline rounded-full btn-sm'
-										onClick={() => alert("Followed successfully")}
-									>
-										Follow
-									</button>
-								)}
+								{!isMyProfile && 
+								isFollowing ? 
+								<LoadingSpinner size="sm"  />
+								:
+								<button
+									className='btn btn-outline rounded-full btn-sm'
+									onClick={() => follow(user._id)}
+								>
+									{amIFollowing ? "Unfollow" : "Follow"}
+								</button>
+								}
 								{(coverImage || profileImage) && (
 									<button
+										
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => alert("Profile updated successfully")}
+										onClick={()=>updateProfileImage()}
 									>
-										Update
+										{isUpdating ? <LoadingSpinner size="sm" /> : "Save"}
 									</button>
 								)}
 							</div>

@@ -11,6 +11,7 @@ import {   useMutation,  useQuery,  useQueryClient } from "@tanstack/react-query
 const Sidebar = () => {	
 	const queryClient = useQueryClient()
 	const { data} = useQuery({queryKey:["authUser"]})
+	
 	const { isError,isPending, error, mutate,isSuccess} = useMutation({
 			mutationFn: async ()=>{
 				
@@ -27,6 +28,8 @@ const Sidebar = () => {
 				queryClient.invalidateQueries(["authUser"])
 			}
 	})
+
+	
 	
     function handleLogout(){
 		mutate()
@@ -68,7 +71,7 @@ const Sidebar = () => {
 					</li>
 				</ul>
 				{data && (
-					<Link
+					<Link 
 						to={`/profile/${data.username}`}
 						className='mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full'
 					>
